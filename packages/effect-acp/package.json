@@ -1,0 +1,97 @@
+{
+  "name": "effect-acp",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./client": {
+      "import": {
+        "types": "./src/client.d.mts",
+        "default": "./src/client.mjs"
+      },
+      "require": {
+        "types": "./src/client.d.cts",
+        "default": "./src/client.cjs"
+      }
+    },
+    "./server": {
+      "import": {
+        "types": "./src/server.d.mts",
+        "default": "./src/server.mjs"
+      },
+      "require": {
+        "types": "./src/server.d.cts",
+        "default": "./src/server.cjs"
+      }
+    },
+    "./schema": {
+      "import": {
+        "types": "./src/_generated/schema.gen.d.mts",
+        "default": "./src/_generated/schema.gen.mjs"
+      },
+      "require": {
+        "types": "./src/_generated/schema.gen.d.cts",
+        "default": "./src/_generated/schema.gen.cjs"
+      }
+    },
+    "./rpc": {
+      "import": {
+        "types": "./src/rpc.d.mts",
+        "default": "./src/rpc.mjs"
+      },
+      "require": {
+        "types": "./src/rpc.d.cts",
+        "default": "./src/rpc.cjs"
+      }
+    },
+    "./protocol": {
+      "import": {
+        "types": "./src/protocol.d.mts",
+        "default": "./src/protocol.mjs"
+      },
+      "require": {
+        "types": "./src/protocol.d.cts",
+        "default": "./src/protocol.cjs"
+      }
+    },
+    "./terminal": {
+      "import": {
+        "types": "./src/terminal.d.mts",
+        "default": "./src/terminal.mts"
+      },
+      "require": {
+        "types": "./src/terminal.d.cts",
+        "default": "./src/terminal.cjs"
+      }
+    },
+    "./child-process": {
+      "import": {
+        "types": "./src/child-process.d.mts",
+        "default": "./src/child-process.mts"
+      },
+      "require": {
+        "types": "./src/child-process.d.cts",
+        "default": "./src/child-process.cjs"
+      }
+    }
+  },
+  "scripts": {
+    "dev": "tsdown src/client.ts src/server.ts src/_generated/schema.gen.ts src/rpc.ts src/protocol.ts src/child-process.ts src/terminal.ts --format esm,cjs --dts --watch --clean",
+    "build": "tsdown src/client.ts src/server.ts src/_generated/schema.gen.ts src/rpc.ts src/protocol.ts src/child-process.ts src/terminal.ts --format esm,cjs --dts --clean",
+    "prepare": "effect-language-service patch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "generate": "bun run scripts/generate.ts"
+  },
+  "dependencies": {
+    "effect": "catalog:"
+  },
+  "devDependencies": {
+    "@effect/language-service": "catalog:",
+    "@effect/openapi-generator": "catalog:",
+    "@effect/platform-node": "catalog:",
+    "@effect/vitest": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

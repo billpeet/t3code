@@ -1,0 +1,182 @@
+import * as Schema from "effect/Schema";
+import * as RpcClientError from "effect/unstable/rpc/RpcClientError";
+
+import * as AcpSchema from "./_generated/schema.gen";
+
+export type AcpProtocolError = AcpSchema.Error;
+
+export class AcpSpawnError extends Schema.TaggedErrorClass<AcpSpawnError>()("AcpSpawnError", {
+  command: Schema.optional(Schema.String),
+  cause: Schema.optional(Schema.Defect),
+}) {
+  override get message() {
+    return this.command
+      ? `Failed to spawn ACP process for command: ${this.command}`
+      : "Failed to spawn ACP process";
+  }
+}
+
+export class AcpProcessExitedError extends Schema.TaggedErrorClass<AcpProcessExitedError>()(
+  "AcpProcessExitedError",
+  {
+    code: Schema.optional(Schema.Number),
+    cause: Schema.optional(Schema.Defect),
+  },
+) {
+  override get message() {
+    return this.code === undefined
+      ? "ACP process exited unexpectedly"
+      : `ACP process exited unexpectedly with code ${this.code}`;
+  }
+}
+
+export class AcpProtocolParseError extends Schema.TaggedErrorClass<AcpProtocolParseError>()(
+  "AcpProtocolParseError",
+  {
+    detail: Schema.String,
+    cause: Schema.optional(Schema.Defect),
+  },
+) {
+  override get message() {
+    return `Failed to parse ACP protocol message: ${this.detail}`;
+  }
+}
+
+export class AcpTransportError extends Schema.TaggedErrorClass<AcpTransportError>()(
+  "AcpTransportError",
+  {
+    detail: Schema.String,
+    cause: Schema.optional(Schema.Defect),
+  },
+) {
+  override get message() {
+    return this.detail;
+  }
+}
+
+export class AcpRequestError extends Schema.TaggedErrorClass<AcpRequestError>()("AcpRequestError", {
+  code: Schema.Number,
+  errorMessage: Schema.String,
+  data: Schema.optional(Schema.Unknown),
+}) {
+  override get message() {
+    return this.errorMessage;
+  }
+
+  static fromProtocolError(error: AcpProtocolError) {
+    return new AcpRequestError({
+      code: error.code,
+      errorMessage: error.message,
+      ...(error.data !== undefined ? { data: error.data } : {}),
+    });
+  }
+
+  static parseError(message = "Parse error", data?: unknown) {
+    return new AcpRequestError({
+      code: -32700,
+      errorMessage: message,
+      ...(data !== undefined ? { data } : {}),
+    });
+  }
+
+  static invalidRequest(message = "Invalid request", data?: unknown) {
+    return new AcpRequestError({
+      code: -32600,
+      errorMessage: message,
+      ...(data !== undefined ? { data } : {}),
+    });
+  }
+
+  static methodNotFound(method: string) {
+    return new AcpRequestError({
+      code: -32601,
+      errorMessage: `Method not found: ${method}`,
+    });
+  }
+
+  static invalidParams(message = "Invalid params", data?: unknown) {
+    return new AcpRequestError({
+      code: -32602,
+      errorMessage: message,
+      ...(data !== undefined ? { data } : {}),
+    });
+  }
+
+  static internalError(message = "Internal error", data?: unknown) {
+    return new AcpRequestError({
+      code: -32603,
+      errorMessage: message,
+      ...(data !== undefined ? { data } : {}),
+    });
+  }
+
+  static authRequired(message = "Authentication required", data?: unknown) {
+    return new AcpRequestError({
+      code: -32000,
+      errorMessage: message,
+      ...(data !== undefined ? { data } : {}),
+    });
+  }
+
+  static resourceNotFound(message = "Resource not found", data?: unknown) {
+    return new AcpRequestError({
+      code: -32002,
+      errorMessage: message,
+      ...(data !== undefined ? { data } : {}),
+    });
+  }
+
+  toProtocolError(): AcpProtocolError {
+    return {
+      code: this.code,
+      message: this.errorMessage,
+      ...(this.data !== undefined ? { data: this.data } : {}),
+    };
+  }
+}
+
+export type AcpError =
+  | AcpRequestError
+  | AcpSpawnError
+  | AcpProcessExitedError
+  | AcpProtocolParseError
+  | AcpTransportError;
+
+export function normalizeAcpError(error: unknown): AcpError {
+  if (
+    Schema.is(AcpRequestError)(error) ||
+    Schema.is(AcpSpawnError)(error) ||
+    Schema.is(AcpProcessExitedError)(error) ||
+    Schema.is(AcpProtocolParseError)(error) ||
+    Schema.is(AcpTransportError)(error)
+  ) {
+    return error;
+  }
+
+  if (Schema.is(RpcClientError.RpcClientError)(error)) {
+    return new AcpTransportError({
+      detail: error.message,
+      cause: error,
+    });
+  }
+
+  if (isProtocolError(error)) {
+    return AcpRequestError.fromProtocolError(error);
+  }
+
+  return new AcpTransportError({
+    detail: error instanceof Error ? error.message : String(error),
+    ...(error !== undefined ? { cause: error } : {}),
+  });
+}
+
+function isProtocolError(value: unknown): value is AcpProtocolError {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "code" in value &&
+    typeof value.code === "number" &&
+    "message" in value &&
+    typeof value.message === "string"
+  );
+}
