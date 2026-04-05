@@ -44,9 +44,16 @@ const GIT_STATUS_REFRESH_DEBOUNCE_MS = 1_000;
 
 let sharedGitStatusClient: GitStatusClient | null = null;
 
+const PENDING_GIT_STATUS_STATE = Object.freeze<GitStatusState>({
+  data: null,
+  error: null,
+  cause: null,
+  isPending: true,
+});
+
 const gitStatusStateAtom = Atom.family((cwd: string) => {
   knownGitStatusCwds.add(cwd);
-  return Atom.make(EMPTY_GIT_STATUS_STATE).pipe(
+  return Atom.make(PENDING_GIT_STATUS_STATE).pipe(
     Atom.keepAlive,
     Atom.withLabel(`git-status:${cwd}`),
   );
