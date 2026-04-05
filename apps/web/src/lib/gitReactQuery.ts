@@ -163,7 +163,7 @@ export function gitRunStackedActionMutationOptions(input: {
         ...(onProgress ? [{ onProgress }] : []),
       );
     },
-    onSuccess: async () => {
+    onSettled: async () => {
       await invalidateGitBranchQueries(input.queryClient, input.cwd);
     },
   });
@@ -177,7 +177,7 @@ export function gitPullMutationOptions(input: { cwd: string | null; queryClient:
       if (!input.cwd) throw new Error("Git pull is unavailable.");
       return api.git.pull({ cwd: input.cwd });
     },
-    onSuccess: async () => {
+    onSettled: async () => {
       await invalidateGitBranchQueries(input.queryClient, input.cwd);
     },
   });
