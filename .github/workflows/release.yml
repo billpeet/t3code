@@ -307,6 +307,8 @@ jobs:
     name: Finalize release
     needs: [preflight, release]
     runs-on: ubuntu-24.04
+    env:
+      RELEASE_BRANCH: ${{ github.event.repository.default_branch }}
     steps:
       - id: app_token
         name: Mint release app token
@@ -319,7 +321,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          ref: main
+          ref: ${{ env.RELEASE_BRANCH }}
           fetch-depth: 0
           token: ${{ steps.app_token.outputs.token }}
           persist-credentials: true
@@ -374,4 +376,4 @@ jobs:
 
           git add apps/server/package.json apps/desktop/package.json apps/web/package.json packages/contracts/package.json bun.lock
           git commit -m "chore(release): prepare $RELEASE_TAG"
-          git push origin HEAD:main
+          git push origin HEAD:"$RELEASE_BRANCH"

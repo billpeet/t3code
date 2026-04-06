@@ -49,13 +49,19 @@ function capture(command, args) {
 const args = new Set(process.argv.slice(2));
 const remoteArg = process.argv.find((arg) => arg.startsWith("--remote="));
 const branchArg = process.argv.find((arg) => arg.startsWith("--branch="));
+const upstreamBranchArg = process.argv.find((arg) => arg.startsWith("--upstream-branch="));
 const remote = remoteArg ? remoteArg.slice("--remote=".length) : "upstream";
-const branch = branchArg ? branchArg.slice("--branch=".length) : "main";
 const shouldPush = !args.has("--no-push");
 const useRebase = args.has("--rebase");
-const upstreamRef = `${remote}/${branch}`;
 
 capture("git", ["rev-parse", "--show-toplevel"]);
+
+const currentBranch = capture("git", ["branch", "--show-current"]);
+const branch = branchArg ? branchArg.slice("--branch=".length) : currentBranch;
+const upstreamBranch = upstreamBranchArg
+  ? upstreamBranchArg.slice("--upstream-branch=".length)
+  : "main";
+const upstreamRef = `${remote}/${upstreamBranch}`;
 
 const status = capture("git", ["status", "--porcelain"]);
 if (status.length > 0) {
@@ -69,7 +75,6 @@ console.log(`[sync:upstream] ${remote}=${remoteUrl}`);
 
 run("git", ["fetch", remote, "--tags", "--prune"]);
 
-const currentBranch = capture("git", ["branch", "--show-current"]);
 if (currentBranch !== branch) {
   run("git", ["checkout", branch]);
 }

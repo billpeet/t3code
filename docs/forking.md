@@ -15,9 +15,10 @@ git remote -v
 
 ## Day-to-day model
 
-- Keep your fork's `main` branch as the integration branch for your customizations.
-- Branch feature work from your fork's `main`.
-- Regularly merge the latest upstream `main` into your fork's `main`.
+- Keep your fork's `main` branch as a clean mirror of upstream.
+- Use `fork-main` as the long-lived integration branch for your customizations.
+- Branch feature work from `fork-main`.
+- Regularly merge the latest upstream `main` into `fork-main`.
 
 ## Syncing upstream
 
@@ -31,14 +32,20 @@ What it does:
 
 1. Verifies the working tree is clean.
 2. Fetches `upstream` with tags and pruning.
-3. Checks out `main` if needed.
-4. Merges `upstream/main` into local `main`.
-5. Pushes the result to `origin/main`.
+3. Uses the current branch as the target branch unless `--branch` is provided.
+4. Merges `upstream/main` into that target branch.
+5. Pushes the result to the matching branch on `origin`.
 
 If you prefer rebasing instead of merging:
 
 ```bash
 node scripts/sync-upstream.mjs --rebase
+```
+
+To sync a branch other than the current branch:
+
+```bash
+node scripts/sync-upstream.mjs --branch=fork-main
 ```
 
 If you want to inspect the result locally before pushing:
@@ -84,6 +91,7 @@ Required items for the full release pipeline:
 
 Unsigned releases can still be produced without the signing secrets, but notarization and code signing will be skipped.
 
-## Fresh fork note
+## Branch layout
 
-On a brand-new fork, GitHub may not list workflow definitions immediately even though the files exist on `main`. If the Actions tab looks empty, push a commit to the fork's `main` branch and let GitHub re-index the workflows.
+- `main`: clean upstream mirror
+- `fork-main`: fork-specific integration branch and expected default branch for this fork

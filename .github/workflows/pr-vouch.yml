@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - main
+      - fork-main
     paths:
       - .github/VOUCHED.td
       - .github/workflows/pr-vouch.yml

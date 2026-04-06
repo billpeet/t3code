@@ -129,7 +129,7 @@ Checklist:
 
 ## 4) Ongoing release checklist
 
-1. Ensure `main` is green in CI.
+1. Ensure your fork's integration branch is green in CI.
 2. Bump app version as needed.
 3. Create release tag: `vX.Y.Z`.
 4. Push tag.
