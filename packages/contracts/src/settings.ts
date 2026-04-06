@@ -8,6 +8,7 @@ import {
   DEFAULT_GIT_TEXT_GENERATION_MODEL_BY_PROVIDER,
 } from "./model";
 import { ModelSelection } from "./orchestration";
+import { ScheduledJob } from "./scheduledJobs";
 
 // ── Client Settings (local-only) ───────────────────────────────
 
@@ -82,6 +83,7 @@ export const ServerSettings = Schema.Struct({
   defaultThreadEnvMode: ThreadEnvMode.pipe(
     Schema.withDecodingDefault(() => "local" as const satisfies ThreadEnvMode),
   ),
+  scheduledJobs: Schema.Array(ScheduledJob).pipe(Schema.withDecodingDefault(() => [])),
   textGenerationModelSelection: ModelSelection.pipe(
     Schema.withDecodingDefault(() => ({
       provider: "codex" as const,
@@ -164,6 +166,7 @@ const ClaudeSettingsPatch = Schema.Struct({
 export const ServerSettingsPatch = Schema.Struct({
   enableAssistantStreaming: Schema.optionalKey(Schema.Boolean),
   defaultThreadEnvMode: Schema.optionalKey(ThreadEnvMode),
+  scheduledJobs: Schema.optionalKey(Schema.Array(ScheduledJob)),
   textGenerationModelSelection: Schema.optionalKey(ModelSelectionPatch),
   observability: Schema.optionalKey(
     Schema.Struct({

@@ -28,6 +28,7 @@ import { OrchestrationReactor } from "./orchestration/Services/OrchestrationReac
 import { ServerLifecycleEvents } from "./serverLifecycleEvents";
 import { ServerSettingsService } from "./serverSettings";
 import { AnalyticsService } from "./telemetry/Services/AnalyticsService";
+import { startScheduledJobRunner } from "./scheduledJobs/startScheduledJobRunner";
 
 const isWildcardHost = (host: string | undefined): boolean =>
   host === "0.0.0.0" || host === "::" || host === "[::]";
@@ -346,6 +347,8 @@ const makeServerRuntimeStartup = Effect.gen(function* () {
 
       yield* Effect.logDebug("Accepting commands");
       yield* commandGate.signalCommandReady;
+      yield* Effect.logDebug("startup phase: starting scheduled job runner");
+      yield* runStartupPhase("scheduled-jobs.start", startScheduledJobRunner);
       yield* Effect.logDebug("startup phase: waiting for http listener");
       yield* runStartupPhase("http.wait", Deferred.await(httpListening));
       yield* Effect.logDebug("startup phase: publishing ready event");
