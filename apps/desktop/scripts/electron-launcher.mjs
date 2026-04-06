@@ -97,6 +97,41 @@ function readJson(path) {
   }
 }
 
+function resolveInstalledElectronBinaryPath(electronPackageDir) {
+  const pathFile = join(electronPackageDir, "path.txt");
+
+  if (!existsSync(pathFile)) {
+    return null;
+  }
+
+  const executablePath = readFileSync(pathFile, "utf8").trim();
+  if (!executablePath) {
+    return null;
+  }
+
+  const distRoot = process.env.ELECTRON_OVERRIDE_DIST_PATH || join(electronPackageDir, "dist");
+  const electronBinaryPath = join(distRoot, executablePath);
+  return existsSync(electronBinaryPath) ? electronBinaryPath : null;
+}
+
+function ensureElectronBinaryInstalled(electronPackageDir) {
+  const installScriptPath = join(electronPackageDir, "install.js");
+  const nodeExecutable = process.env.npm_node_execpath || "node";
+  const result = spawnSync(nodeExecutable, [installScriptPath], {
+    cwd: electronPackageDir,
+    stdio: "inherit",
+    env: process.env,
+  });
+
+  if (result.status === 0) {
+    return;
+  }
+
+  const errorMessage =
+    result.error instanceof Error ? result.error.message : `exit code ${String(result.status)}`;
+  throw new Error(`Failed to install Electron runtime automatically: ${errorMessage}`);
+}
+
 function buildMacLauncher(electronBinaryPath) {
   const sourceAppBundlePath = resolve(electronBinaryPath, "../../..");
   const runtimeDir = join(desktopDir, ".electron-runtime");
@@ -134,7 +169,23 @@ function buildMacLauncher(electronBinaryPath) {
 
 export function resolveElectronPath() {
   const require = createRequire(import.meta.url);
-  const electronBinaryPath = require("electron");
+  const electronPackageJsonPath = require.resolve("electron/package.json");
+  const electronPackageDir = dirname(electronPackageJsonPath);
+  let electronBinaryPath = resolveInstalledElectronBinaryPath(electronPackageDir);
+
+  if (!electronBinaryPath) {
+    ensureElectronBinaryInstalled(electronPackageDir);
+    electronBinaryPath = resolveInstalledElectronBinaryPath(electronPackageDir);
+  }
+
+  if (!electronBinaryPath) {
+    throw new Error(
+      `Electron runtime is still missing after install attempt. Expected assets under ${join(
+        electronPackageDir,
+        "dist",
+      )}`,
+    );
+  }
 
   if (process.platform !== "darwin") {
     return electronBinaryPath;
